@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#7c5cff">
+<meta name="description" content="英語小達人線上測驗，支援手機、平板與電腦瀏覽器直接使用。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>英語小達人｜公開網頁版</title>
+<style>
+:root{--purple:#7c5cff;--orange:#ff7a59;--green:#35b86b;--ink:#263238;--muted:#687078;--card:#fff;--bg1:#dff6ff;--bg2:#fff4d6;--bg3:#f0e5ff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:linear-gradient(160deg,var(--bg1),var(--bg2) 55%,var(--bg3));color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC",sans-serif}
+body{min-height:100dvh;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+.app{width:100%;max-width:620px;margin:auto;background:rgba(255,255,255,.96);border-radius:26px;padding:18px;box-shadow:0 10px 32px rgba(0,0,0,.12)}
+h1{font-size:clamp(28px,8vw,36px);margin:4px 0 6px;text-align:center}.subtitle{text-align:center;color:var(--muted);margin-bottom:16px;font-size:16px}
+.card,.question{background:#f8f8ff;border-radius:22px;padding:16px;margin:10px 0}.label{font-weight:800;margin-bottom:8px;text-align:center}
+select,input,button{font:inherit;border-radius:16px}select,input{width:100%;border:0;background:#f2f4f8;padding:15px;font-size:18px;min-height:54px}input{border:3px solid #d8dce5;background:#fff;outline:none}input:focus{border-color:var(--purple)}
+button{width:100%;min-height:56px;border:0;padding:12px 16px;margin:7px 0;font-size:19px;font-weight:800;cursor:pointer;background:var(--purple);color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.12);touch-action:manipulation}button:active{transform:translateY(2px);box-shadow:none}button:disabled{opacity:.55;cursor:default}
+.start{background:var(--orange);font-size:22px}.listen{background:var(--green)}.secondary{background:#667085}.ghost{background:#eef1ff;color:#30343b}.choice{background:#eef1ff;color:#30343b;text-align:left;padding-left:20px}.choice.correct{background:#bdf3cb}.choice.wrong{background:#ffd0d0}
+.topbar{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:8px}.badge{flex:1;background:#fff0a8;border-radius:20px;padding:8px 10px;font-weight:800;text-align:center;font-size:15px}
+.progressWrap{height:10px;background:#eceef4;border-radius:999px;overflow:hidden;margin:8px 0 3px}.progressBar{height:100%;width:0;background:var(--purple);transition:width .2s ease}.progress{font-size:14px;color:#666;text-align:center;margin:5px}
+.translation{font-size:clamp(28px,8vw,38px);font-weight:900;margin:8px 0 14px;text-align:center;word-break:break-word}.feedback{min-height:38px;text-align:center;font-size:20px;font-weight:900;margin:8px}.correctText{color:#20a957}.wrongText{color:#e34b4b}.hidden{display:none!important}.finish{text-align:center;padding:20px 6px}.finish .emoji{font-size:64px}.small{font-size:14px;color:#777;text-align:center;line-height:1.55}.error{background:#fff0f0;color:#b3261e;padding:12px;border-radius:14px;margin:10px 0;text-align:left}.success{background:#ecfff1;color:#18794e;padding:12px;border-radius:14px;margin:10px 0;text-align:left}
+.settings{margin-top:12px}.settings summary{cursor:pointer;font-weight:800;padding:12px;text-align:center;color:#525866}.settings .inner{padding:4px 0}.settings input{font-size:15px;text-align:left}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.resultBig{font-size:42px;font-weight:900;margin:8px 0}.hint{font-size:13px;color:#6b7280;line-height:1.55;margin-top:6px}.nextSticky{position:sticky;bottom:max(0px,env(safe-area-inset-bottom));padding-top:6px;background:linear-gradient(to top,#fff 72%,rgba(255,255,255,0))}
+@media(max-width:380px){.app{padding:14px;border-radius:20px}.row{grid-template-columns:1fr}.badge{font-size:14px}.translation{font-size:30px}}
+</style>
+</head>
+<body>
+<main class="app">
+<section id="home">
+  <h1>🌈 英語小達人</h1>
+  <div class="subtitle">聽一聽・想一想・答一答！</div>
+  <div class="card"><div class="label">📚 選擇課程</div><select id="lessonSelect"></select></div>
+  <div class="card"><div class="label">🎯 題型</div><select id="modeSelect"><option value="MIX">混合題（選擇＋拼字）</option><option value="CHOICE">選擇題</option><option value="TYPE">拼字題</option></select></div>
+  <button class="start" id="startBtn">🚀 開始測驗</button>
+  <button class="listen" id="voiceBtn">🔊 試聽英文發音</button>
+  <div id="loadStatus" class="small">正在準備題庫……</div>
+  <div id="loadMessage" class="hidden"></div>
+
+  <details class="settings">
+    <summary>⚙️ 題庫設定（可不設定）</summary>
+    <div class="inner">
+      <div class="hint">可貼上 Google 試算表「CSV 發佈網址」，欄位順序為：lesson, word, translation。網址會只儲存在這支手機的瀏覽器。</div>
+      <input id="sheetUrl" type="url" inputmode="url" placeholder="貼上 Google Sheet CSV 網址">
+      <div class="row"><button class="secondary" id="saveSheetBtn">☁️ 儲存並更新</button><button class="ghost" id="clearSheetBtn">↩️ 使用內建題庫</button></div>
+      <div class="hint">也可直接從手機選擇 CSV 檔匯入：</div>
+      <input id="csvFile" type="file" accept=".csv,text/csv">
+    </div>
+  </details>
+</section>
+
+<section id="quiz" class="hidden">
+  <div class="topbar"><div class="badge">⭐ 答對 <span id="score">0</span></div><div class="badge">❌ 錯題 <span id="wrong">0</span></div></div>
+  <div class="progressWrap"><div id="progressBar" class="progressBar"></div></div>
+  <div class="progress">第 <span id="currentNo">1</span> / <span id="totalNo">1</span> 題</div>
+  <div class="question">
+    <div class="translation" id="translation">著色</div>
+    <button class="listen" id="speakBtn">🔊 聽單字</button>
+    <div id="typingArea" class="hidden"><input id="answer" type="text" placeholder="✏️ 輸入英文" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done"><button id="submitBtn">送出答案</button></div>
+    <div id="choiceArea" class="hidden"></div>
+  </div>
+  <div id="feedback" class="feedback"></div>
+  <div class="nextSticky"><button id="nextBtn" class="hidden">➡️ 下一題</button></div>
+</section>
+
+<section id="finish" class="hidden finish">
+  <div class="emoji">🎉🏆🎉</div><h1>完成！</h1>
+  <div id="percent" class="resultBig">100%</div><div id="finishText" style="font-size:19px;line-height:1.6"></div>
+  <button id="retryBtn">🔄 再挑戰錯題</button><button id="homeBtn" class="secondary">🏠 回到課程選擇</button>
+</section>
+</main>
+<script>
+const DEFAULT_VOCABULARY=[
+ ["Lesson 1","coloring","著色"],["Lesson 1","cutting","剪"],["Lesson 1","counting","數數"],["Lesson 1","talking","說話"],["Lesson 1","drawing","畫畫"],["Lesson 1","gluing","黏貼"],["Lesson 1","erasing","擦拭"],["Lesson 1","turtle","烏龜"],["Lesson 1","chicken","雞"],["Lesson 1","cat","貓"],["Lesson 1","dog","狗"],["Lesson 1","frog","青蛙"],["Lesson 1","horse","馬"],["Lesson 1","sheep","綿羊"],["Lesson 1","goat","山羊"],["Lesson 1","duck","鴨子"],["Lesson 1","cow","牛"],["Lesson 1","brother","兄弟"],["Lesson 1","cousin","表/堂兄弟姊妹"],["Lesson 1","aunt","阿姨/姑姑"],["Lesson 1","sister","姊妹"],["Lesson 1","mom","媽媽"],["Lesson 1","dad","爸爸"],["Lesson 1","uncle","叔叔/舅舅"]
+];
+const $=id=>document.getElementById(id);const DEFAULT_WORDS=()=>DEFAULT_VOCABULARY.map(x=>({lesson:x[0],word:x[1],translation:x[2]}));
+let vocabulary=[],pool=[],wrongPool=[],current=null,score=0,wrong=0,answered=false,total=0,lastWrongPool=[];
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function parseCSV(text){const rows=[];let row=[],cell="",quote=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'&&quote&&n==='"'){cell+='"';i++;continue}if(c==='"'){quote=!quote;continue}if(c===','&&!quote){row.push(cell.trim());cell="";continue}if((c==='\n'||c==='\r')&&!quote){if(c==='\r'&&n==='\n')i++;row.push(cell.trim());cell="";if(row.some(x=>x))rows.push(row);row=[];continue}cell+=c}if(cell||row.length){row.push(cell.trim());rows.push(row)}return rows}
+function rowsToWords(rows){if(!rows.length)return[];let start=0;const h=rows[0].map(x=>x.toLowerCase());if(h.includes('word')||h.includes('英文'))start=1;return rows.slice(start).map(r=>({lesson:r[0]||'未分類',word:r[1]||'',translation:r[2]||''})).filter(x=>x.word&&x.translation)}
+function showMessage(text,type='success'){const el=$('loadMessage');el.className=type;el.textContent=text;el.classList.remove('hidden')}
+function fillLessons(){const s=$('lessonSelect');const previous=s.value;s.innerHTML='<option value="ALL">🌟 全部課程</option>';[...new Set(vocabulary.map(x=>x.lesson))].forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent='📖 '+l;s.appendChild(o)});if([...s.options].some(o=>o.value===previous))s.value=previous}
+async function loadVocabulary(){const url=localStorage.getItem('englishQuizSheetUrl')||'';$('sheetUrl').value=url;$('loadMessage').classList.add('hidden');$('loadStatus').textContent='📚 正在準備題庫……';if(!url.startsWith('http')){vocabulary=DEFAULT_WORDS();$('loadStatus').textContent=`✅ 內建題庫已就緒，共 ${vocabulary.length} 題`;fillLessons();return}try{const res=await fetch(url,{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);const data=rowsToWords(parseCSV(await res.text()));if(!data.length)throw new Error('找不到有效題目');vocabulary=data;$('loadStatus').textContent=`☁️ 線上題庫已更新，共 ${vocabulary.length} 題`;fillLessons()}catch(e){vocabulary=DEFAULT_WORDS();$('loadStatus').textContent=`⚠️ 線上題庫讀取失敗，已改用內建 ${vocabulary.length} 題`;showMessage('線上題庫暫時無法讀取：'+e.message,'error');fillLessons()}}
+function testVoice(){if(!('speechSynthesis'in window)){showMessage('這個瀏覽器不支援語音播放。','error');return}const u=new SpeechSynthesisUtterance("Hello! Let's learn English!");u.lang='en-US';u.rate=.85;speechSynthesis.cancel();speechSynthesis.speak(u)}
+function speakCurrent(){if(!current||!('speechSynthesis'in window))return;const u=new SpeechSynthesisUtterance(current.word);u.lang='en-US';u.rate=.82;speechSynthesis.cancel();speechSynthesis.speak(u)}
+function startQuiz(sourceOverride=null){const lesson=$('lessonSelect').value;let source=sourceOverride||(lesson==='ALL'?vocabulary:vocabulary.filter(x=>x.lesson===lesson));if(!source.length)return;pool=shuffle(source);wrongPool=[];lastWrongPool=[];score=0;wrong=0;total=pool.length;answered=false;$('score').textContent=0;$('wrong').textContent=0;$('totalNo').textContent=total;$('home').classList.add('hidden');$('finish').classList.add('hidden');$('quiz').classList.remove('hidden');nextQuestion()}
+function nextQuestion(){$('feedback').textContent='';$('feedback').className='feedback';$('nextBtn').classList.add('hidden');$('answer').value='';$('typingArea').classList.add('hidden');$('choiceArea').classList.add('hidden');answered=false;if(!pool.length){finishQuiz();return}current=pool.pop();const done=score+wrong;$('currentNo').textContent=done+1;$('progressBar').style.width=((done/total)*100)+'%';$('translation').textContent=current.translation;const mode=$('modeSelect').value;if(mode==='TYPE')setupTyping();else if(mode==='CHOICE')setupChoices();else(Math.random()<.5?setupTyping():setupChoices());setTimeout(speakCurrent,180)}
+function setupTyping(){$('typingArea').classList.remove('hidden');setTimeout(()=>$('answer').focus(),100)}
+function setupChoices(){const area=$('choiceArea');area.classList.remove('hidden');area.innerHTML='';const candidates=shuffle(vocabulary.filter(x=>x.word.toLowerCase()!==current.word.toLowerCase()));const options=shuffle([current,...candidates.slice(0,Math.min(3,candidates.length))]);options.forEach((x,i)=>{const b=document.createElement('button');b.className='choice';b.textContent=`${String.fromCharCode(65+i)}. ${x.word}`;b.onclick=()=>checkAnswer(x.word.toLowerCase()===current.word.toLowerCase(),b);area.appendChild(b)})}
+function submitTyping(){const v=$('answer').value.trim().toLowerCase();if(v&&!answered)checkAnswer(v===current.word.toLowerCase())}
+function checkAnswer(ok,button=null){if(answered)return;answered=true;if(ok){score++;$('score').textContent=score;$('feedback').textContent='🎉 答對了！好棒！';$('feedback').className='feedback correctText';if(button)button.classList.add('correct')}else{wrong++;wrongPool.push(current);$('wrong').textContent=wrong;$('feedback').textContent='💪 答案是：'+current.word;$('feedback').className='feedback wrongText';if(button)button.classList.add('wrong')}$('typingArea').classList.add('hidden');Array.from($('choiceArea').querySelectorAll('button')).forEach(b=>b.disabled=true);$('nextBtn').classList.remove('hidden');$('progressBar').style.width=(((score+wrong)/total)*100)+'%';speakCurrent()}
+function finishQuiz(){lastWrongPool=[...wrongPool];$('quiz').classList.add('hidden');$('finish').classList.remove('hidden');const pct=total?Math.round(score/total*100):0;$('percent').textContent=pct+'%';$('finishText').textContent=lastWrongPool.length?`這次答對 ${score} 題、錯 ${wrong} 題。可以直接把錯題再挑戰一次！`:`全部答對！一共答對 ${score} 題，你是今天的英語小達人！🌟`;$('retryBtn').classList.toggle('hidden',!lastWrongPool.length)}
+function retryWrong(){if(lastWrongPool.length)startQuiz(lastWrongPool)}
+function backHome(){$('finish').classList.add('hidden');$('quiz').classList.add('hidden');$('home').classList.remove('hidden')}
+$('startBtn').onclick=()=>startQuiz();$('voiceBtn').onclick=testVoice;$('speakBtn').onclick=speakCurrent;$('submitBtn').onclick=submitTyping;$('nextBtn').onclick=nextQuestion;$('retryBtn').onclick=retryWrong;$('homeBtn').onclick=backHome;$('answer').addEventListener('keydown',e=>{if(e.key==='Enter')submitTyping()});
+$('saveSheetBtn').onclick=async()=>{const url=$('sheetUrl').value.trim();if(!/^https?:\/\//i.test(url)){showMessage('請先貼上有效的 http/https CSV 網址。','error');return}localStorage.setItem('englishQuizSheetUrl',url);await loadVocabulary();showMessage('題庫網址已儲存在這支手機。','success')};
+$('clearSheetBtn').onclick=()=>{localStorage.removeItem('englishQuizSheetUrl');$('sheetUrl').value='';vocabulary=DEFAULT_WORDS();fillLessons();$('loadStatus').textContent=`✅ 已切回內建題庫，共 ${vocabulary.length} 題`;showMessage('已切回內建題庫。','success')};
+$('csvFile').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{const data=rowsToWords(parseCSV(await f.text()));if(!data.length)throw new Error('CSV 沒有有效題目');vocabulary=data;fillLessons();$('loadStatus').textContent=`📱 已載入手機 CSV，共 ${vocabulary.length} 題`;showMessage('CSV 匯入成功。本次開啟期間可直接使用。','success')}catch(err){showMessage('CSV 匯入失敗：'+err.message,'error')}});
+loadVocabulary();
+</script>
+</body>
+</html>
